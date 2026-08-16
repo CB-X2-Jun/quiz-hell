@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>史上最难！生僻字挑战 · Netlify 排行榜</title>
+    <style>
+        /* ===== 全局重置 & 主题 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0b0e17;
+            color: #e8edf5;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .app {
+            width: 100%;
+            max-width: 820px;
+            background: #141a26;
+            border-radius: 28px;
+            padding: 28px 30px 34px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            border: 1px solid #2a3344;
+            position: relative;
+        }
+
+        /* ===== 头部 ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            border-bottom: 1px solid #2a3344;
+            padding-bottom: 18px;
+            margin-bottom: 22px;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f0c27f, #fc5c7d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+        }
+        .header .ip-box {
+            background: #1e2636;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 14px;
+            color: #9aaec9;
+            border: 1px solid #2f3a4e;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header .ip-box .ip-label {
+            color: #6a7f9b;
+            font-size: 12px;
+        }
+        .header .ip-box .ip-value {
+            color: #c8d6e5;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== 模式切换 ===== */
+        .mode-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 0;
+            border: 2px solid #2a3344;
+            border-radius: 40px;
+            background: transparent;
+            color: #8a9bb5;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+        }
+        .mode-btn:hover {
+            border-color: #4a5a7a;
+            color: #c8d6e5;
+        }
+        .mode-btn.active {
+            border-color: #f0c27f;
+            color: #f0c27f;
+            background: rgba(240, 194, 127, 0.08);
+            box-shadow: 0 0 20px rgba(240, 194, 127, 0.06);
+        }
+        .mode-btn .badge {
+            display: inline-block;
+            background: #2a3344;
+            color: #9aaec9;
+            font-size: 11px;
+            padding: 0 10px;
+            border-radius: 20px;
+            margin-left: 6px;
+            font-weight: 400;
+        }
+        .mode-btn.active .badge {
+            background: #3a4a5a;
+            color: #f0c27f;
+        }
+
+        /* ===== 状态栏 ===== */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #10161f;
+            border-radius: 16px;
+            padding: 12px 20px;
+            margin-bottom: 22px;
+            border: 1px solid #1e2636;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .status-bar .score-box {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .status-bar .score-box .label {
+            color: #6a7f9b;
+            font-size: 14px;
+        }
+        .status-bar .score-box .number {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f0c27f;
+        }
+        .status-bar .timer-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            color: #9aaec9;
+        }
+        .status-bar .timer-box .timer-num {
+            font-weight: 700;
+            font-size: 24px;
+            color: #fc5c7d;
+            min-width: 40px;
+            text-align: center;
+        }
+        .status-bar .timer-box .timer-num.safe {
+            color: #6fcf97;
+        }
+
+        /* ===== 题目区 ===== */
+        .question-area {
+            background: #10161f;
+            border-radius: 20px;
+            padding: 28px 24px;
+            border: 1px solid #1e2636;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .question-text {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-align: center;
+            color: #e8edf5;
+            line-height: 1.6;
+        }
+        .question-text .highlight {
+            color: #f0c27f;
+            background: rgba(240, 194, 127, 0.12);
+            padding: 0 10px;
+            border-radius: 8px;
+        }
+
+        /* 图片预览（题目中的单图） */
+        .question-image {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: center;
+        }
+        .question-image img {
+            max-width: 140px;
+            max-height: 140px;
+            border-radius: 16px;
+            background: #0b0e17;
+            border: 2px solid #2a3344;
+            padding: 8px;
+            object-fit: contain;
+            image-rendering: auto;
+        }
+
+        /* 选项网格 */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .option-btn {
+            background: #1a2230;
+            border: 2px solid #2a3344;
+            border-radius: 16px;
+            padding: 14px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #c8d6e5;
+            font-size: 15px;
+            font-weight: 500;
+            min-height: 70px;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: #4a6a8a;
+            background: #1f2a3c;
+            transform: translateY(-2px);
+        }
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .option-btn .opt-label {
+            background: #2a3344;
+            color: #9aaec9;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .option-btn .opt-img {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background: #0b0e17;
+            border: 1px solid #2a3344;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        .option-btn .opt-text {
+            flex: 1;
+            word-break: break-word;
+        }
+        .option-btn.correct {
+            border-color: #6fcf97;
+            background: rgba(111, 207, 151, 0.12);
+        }
+        .option-btn.correct .opt-label {
+            background: #6fcf97;
+            color: #0b0e17;
+        }
+        .option-btn.wrong {
+            border-color: #fc5c7d;
+            background: rgba(252, 92, 125, 0.12);
+        }
+        .option-btn.wrong .opt-label {
+            background: #fc5c7d;
+            color: #0b0e17;
+        }
+        .option-btn.reveal {
+            border-color: #f0c27f;
+            background: rgba(240, 194, 127, 0.08);
+        }
+
+        /* ===== 结果 / 反馈 ===== */
+        .feedback-box {
+            margin-top: 20px;
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 16px;
+            text-align: center;
+            width: 100%;
+            display: none;
+        }
+        .feedback-box.show {
+            display: block;
+        }
+        .feedback-box.correct {
+            background: rgba(111, 207, 151, 0.12);
+            border: 1px solid #6fcf97;
+            color: #6fcf97;
+        }
+        .feedback-box.wrong {
+            background: rgba(252, 92, 125, 0.12);
+            border: 1px solid #fc5c7d;
+            color: #fc5c7d;
+        }
+        .feedback-box .answer-reveal {
+            margin-top: 6px;
+            font-weight: 600;
+            color: #f0c27f;
+        }
+
+        /* ===== 底部按钮 ===== */
+        .action-row {
+            display: flex;
+            gap: 14px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .action-btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            background: #2a3344;
+            color: #9aaec9;
+        }
+        .action-btn:hover:not(:disabled) {
+            background: #3a4a5a;
+            color: #e8edf5;
+            transform: translateY(-2px);
+        }
+        .action-btn.primary {
+            background: linear-gradient(135deg, #f0c27f, #fc5c7d);
+            color: #0b0e17;
+        }
+        .action-btn.primary:hover:not(:disabled) {
+            box-shadow: 0 6px 28px rgba(252, 92, 125, 0.3);
+            transform: translateY(-2px);
+        }
+        .action-btn.secondary {
+            background: transparent;
+            border: 2px solid #2a3344;
+            color: #9aaec9;
+        }
+        .action-btn.secondary:hover:not(:disabled) {
+            border-color: #4a5a7a;
+            color: #e8edf5;
+        }
+        .action-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ===== 排行榜 ===== */
+        .leaderboard-section {
+            margin-top: 30px;
+            border-top: 1px solid #1e2636;
+            padding-top: 22px;
+        }
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .leaderboard-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #c8d6e5;
+        }
+        .leaderboard-header .my-rank {
+            font-size: 14px;
+            color: #9aaec9;
+            background: #1a2230;
+            padding: 4px 16px;
+            border-radius: 30px;
+            border: 1px solid #2a3344;
+        }
+        .leaderboard-header .my-rank strong {
+            color: #f0c27f;
+        }
+
+        .leaderboard-list {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 12px;
+            border: 1px solid #1a2230;
+        }
+        .leaderboard-list li {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            border-bottom: 1px solid #1a2230;
+            font-size: 14px;
+            gap: 12px;
+        }
+        .leaderboard-list li:last-child {
+            border-bottom: none;
+        }
+        .leaderboard-list li .rank {
+            width: 32px;
+            text-align: center;
+            color: #6a7f9b;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .leaderboard-list li .rank.top1 {
+            color: #f0c27f;
+        }
+        .leaderboard-list li .rank.top2 {
+            color: #c0c0c0;
+        }
+        .leaderboard-list li .rank.top3 {
+            color: #cd7f32;
+        }
+        .leaderboard-list li .ip-addr {
+            flex: 1;
+            font-family: 'JetBrains Mono', monospace;
+            color: #c8d6e5;
+            font-size: 13px;
+        }
+        .leaderboard-list li .score {
+            font-weight: 700;
+            color: #f0c27f;
+            font-size: 16px;
+            min-width: 48px;
+            text-align: right;
+        }
+        .leaderboard-list li .me-tag {
+            background: #2a3344;
+            color: #f0c27f;
+            font-size: 10px;
+            padding: 0 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .leaderboard-list .empty-msg {
+            padding: 30px 20px;
+            text-align: center;
+            color: #4a5a6a;
+            font-size: 14px;
+        }
+
+        /* ===== 滚动条美化 ===== */
+        .leaderboard-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .leaderboard-list::-webkit-scrollbar-track {
+            background: #0b0e17;
+        }
+        .leaderboard-list::-webkit-scrollbar-thumb {
+            background: #2a3344;
+            border-radius: 10px;
+        }
+
+        /* ===== 加载 / 占位 ===== */
+        .loading-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 40px 0;
+            color: #4a5a6a;
+        }
+        .loading-placeholder .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid #1e2636;
+            border-top-color: #f0c27f;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 600px) {
+            .app {
+                padding: 16px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            .status-bar .score-box .number {
+                font-size: 22px;
+            }
+            .question-text {
+                font-size: 17px;
+            }
+            .mode-btn {
+                font-size: 14px;
+                padding: 10px 0;
+                min-width: 80px;
+            }
+            .action-btn {
+                padding: 10px 22px;
+                font-size: 14px;
+            }
+            .leaderboard-list li {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+            .question-image img {
+                max-width: 100px;
+                max-height: 100px;
+            }
+            .option-btn {
+                font-size: 14px;
+                min-height: 60px;
+                padding: 10px;
+            }
+            .option-btn .opt-img {
+                width: 36px;
+                height: 36px;
+            }
+        }
+        @media (max-width: 400px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .header .ip-box {
+                justify-content: center;
+                font-size: 12px;
+            }
+            .mode-bar {
+                flex-direction: column;
+            }
+            .mode-btn {
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app" id="app">
+        <!-- ===== 头部 ===== -->
+        <header class="header">
+            <h1>𒀭 生僻字挑战</h1>
+            <div class="ip-box">
+                <span class="ip-label">🖥️</span>
+                <span class="ip-value" id="ipDisplay">获取中…</span>
+            </div>
+        </header>
+
+        <!-- ===== 模式切换 ===== -->
+        <div class="mode-bar" id="modeBar">
+            <button class="mode-btn active" data-mode="challenge">
+                ⚔️ 挑战模式
+                <span class="badge">限时50s</span>
+            </button>
+            <button class="mode-btn" data-mode="practice">
+                📖 练习模式
+                <span class="badge">不限时</span>
+            </button>
+        </div>
+
+        <!-- ===== 状态栏 ===== -->
+        <div class="status-bar" id="statusBar">
+            <div class="score-box">
+                <span class="label">🏆 连续答对</span>
+                <span class="number" id="scoreDisplay">0</span>
+            </div>
+            <div class="timer-box">
+                <span>⏱️</span>
+                <span class="timer-num safe" id="timerDisplay">50</span>
+                <span>s</span>
+            </div>
+        </div>
+
+        <!-- ===== 题目区 ===== -->
+        <div class="question-area" id="questionArea">
+            <!-- 由 JS 渲染 -->
+            <div class="loading-placeholder" id="loadingPlaceholder">
+                <div class="spinner"></div>
+                <span>正在加载生僻字库…</span>
+            </div>
+            <div id="questionContent" style="display:none; width:100%;">
+                <div class="question-text" id="questionText">加载题目中…</div>
+                <div class="question-image" id="questionImageContainer" style="display:none;">
+                    <img id="questionSingleImg" src="" alt="生僻字" />
+                </div>
+                <div class="options-grid" id="optionsGrid"></div>
+                <div class="feedback-box" id="feedbackBox"></div>
+                <div class="action-row" id="actionRow">
+                    <button class="action-btn primary" id="nextBtn">下一题 →</button>
+                    <button class="action-btn secondary" id="resetBtn">🔄 重新开始</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 排行榜 ===== -->
+        <div class="leaderboard-section" id="leaderboardSection">
+            <div class="leaderboard-header">
+                <h2>🏅 排行榜 · 挑战模式</h2>
+                <div class="my-rank" id="myRank">我的最佳: <strong>—</strong></div>
+            </div>
+            <ul class="leaderboard-list" id="leaderboardList">
+                <li class="empty-msg">加载中…</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // ======================================================================
+        //  配置区 — 请根据你的仓库修改
+        // ======================================================================
+        const CONFIG = {
+            // GitHub 仓库信息 (用于读取图片和 rank.txt)
+            repoOwner: 'CB-X2-Jun', // 你的 GitHub 用户名
+            repoName: 'quiz-hell', // 仓库名
+            repoBranch: 'main', // 分支名
+
+            // 扩展区列表 (按字母顺序，Z 为特殊区)
+            zones: ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'Z'],
+            get nonZZones() { return this.zones.filter(z => z !== 'Z'); },
+
+            // Netlify Function 端点 (用于更新排行榜)
+            functionEndpoint: '/.netlify/functions/update-score',
+        };
+
+        // ======================================================================
+        //  工具函数
+        // ======================================================================
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function pickRandom(arr, n) {
+            if (arr.length === 0) return [];
+            const shuffled = shuffleArray([...arr]);
+            return shuffled.slice(0, Math.min(n, shuffled.length));
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        function getZoneLabel(zone) {
+            if (zone === 'Z') return '不在Unicode';
+            return `扩展 ${zone} 区`;
+        }
+
+        // ======================================================================
+        //  全局状态
+        // ======================================================================
+        const state = {
+            mode: 'challenge',
+            score: 0,
+            timer: 50,
+            timerInterval: null,
+            isPlaying: false,
+            isAnswering: false,
+            currentQuestion: null,
+            allImages: {},
+            allImagesFlat: [],
+            imagesByZone: {},
+            myIp: '',
+            leaderboard: [],
+            myBestScore: 0,
+            myRank: null,
+            _exitTimer: null,
+        };
+
+        // ======================================================================
+        //  DOM 引用
+        // ======================================================================
+        const $ = id => document.getElementById(id);
+        const dom = {
+            ipDisplay: $('ipDisplay'),
+            modeBar: $('modeBar'),
+            modeBtns: document.querySelectorAll('.mode-btn'),
+            scoreDisplay: $('scoreDisplay'),
+            timerDisplay: $('timerDisplay'),
+            questionArea: $('questionArea'),
+            loadingPlaceholder: $('loadingPlaceholder'),
+            questionContent: $('questionContent'),
+            questionText: $('questionText'),
+            questionImageContainer: $('questionImageContainer'),
+            questionSingleImg: $('questionSingleImg'),
+            optionsGrid: $('optionsGrid'),
+            feedbackBox: $('feedbackBox'),
+            nextBtn: $('nextBtn'),
+            resetBtn: $('resetBtn'),
+            leaderboardList: $('leaderboardList'),
+            myRank: $('myRank'),
+        };
+
+        // ======================================================================
+        //  IP 获取
+        // ======================================================================
+        async function fetchMyIP() {
+            try {
+                const res = await fetch('https://ifconfig.me/ip', { timeout: 5000 });
+                if (res.ok) {
+                    const ip = (await res.text()).trim();
+                    if (ip) return ip;
+                }
+            } catch (_) { /* ignore */ }
+            try {
+                const res = await fetch('https://httpbin.org/ip', { timeout: 5000 });
+                if (res.ok) {
+                    const data = await res.json();
+                    return data.origin || '';
+                }
+            } catch (_) { /* ignore */ }
+            return 'unknown';
+        }
+
+        // ======================================================================
+        //  GitHub API — 图片列表
+        // ======================================================================
+        async function fetchGitHubImageList() {
+            const { repoOwner, repoName, repoBranch, zones } = CONFIG;
+            const base = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/characters`;
+            const results = {};
+
+            for (const zone of zones) {
+                try {
+                    const url = `${base}/${zone}?ref=${repoBranch}`;
+                    const res = await fetch(url);
+                    if (!res.ok) {
+                        console.warn(`Zone ${zone} 不存在或无法访问 (${res.status})`);
+                        results[zone] = [];
+                        continue;
+                    }
+                    const data = await res.json();
+                    if (!Array.isArray(data)) {
+                        results[zone] = [];
+                        continue;
+                    }
+                    const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp'];
+                    const files = data
+                        .filter(item => item.type === 'file')
+                        .filter(item => {
+                            const ext = item.name.toLowerCase();
+                            return imageExts.some(e => ext.endsWith(e));
+                        })
+                        .map(item => ({
+                            path: item.path,
+                            url: item.download_url,
+                            zone: zone,
+                            name: item.name,
+                        }));
+                    results[zone] = files;
+                } catch (e) {
+                    console.warn(`获取 Zone ${zone} 失败:`, e);
+                    results[zone] = [];
+                }
+            }
+            return results;
+        }
+
+        // ======================================================================
+        //  排行榜数据读取 (从 GitHub 公开 rank.txt)
+        // ======================================================================
+        async function fetchRankFileContent() {
+            const { repoOwner, repoName, repoBranch } = CONFIG;
+            const url =
+                `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${repoBranch}/rank.txt`;
+            try {
+                const res = await fetch(url);
+                if (res.status === 404) {
+                    return ''; // 文件不存在视为空
+                }
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.text();
+            } catch (e) {
+                console.warn('读取 rank.txt 失败:', e);
+                return null;
+            }
+        }
+
+        function parseLeaderboard(text) {
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            const list = [];
+            for (const line of lines) {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length >= 2) {
+                    const ip = parts[0];
+                    const score = parseInt(parts[1], 10);
+                    if (!isNaN(score)) list.push({ ip, score });
+                }
+            }
+            return list;
+        }
+
+        // ======================================================================
+        //  本地存储 (fallback)
+        // ======================================================================
+        function getLocalLeaderboard() {
+            try {
+                const data = localStorage.getItem('leaderboard_local');
+                return data ? JSON.parse(data) : [];
+            } catch { return []; }
+        }
+
+        function setLocalLeaderboard(list) {
+            try {
+                localStorage.setItem('leaderboard_local', JSON.stringify(list));
+            } catch { /* ignore */ }
+        }
+
+        function updateLocalScore(ip, score) {
+            const list = getLocalLeaderboard();
+            const idx = list.findIndex(item => item.ip === ip);
+            if (idx >= 0) {
+                if (score > list[idx].score) {
+                    list[idx].score = score;
+                    list[idx].updated_at = new Date().toISOString();
+                }
+            } else {
+                list.push({ ip, score, updated_at: new Date().toISOString() });
+            }
+            list.sort((a, b) => b.score - a.score);
+            if (list.length > 100) list.length = 100;
+            setLocalLeaderboard(list);
+            return list;
+        }
+
+        // ======================================================================
+        //  图片数据管理
+        // ======================================================================
+        function buildImageIndex(raw) {
+            const byZone = {};
+            const flat = [];
+            for (const [zone, files] of Object.entries(raw)) {
+                byZone[zone] = files.map(f => f.url);
+                flat.push(...files.map(f => ({ ...f, zone })));
+            }
+            state.allImages = raw;
+            state.imagesByZone = byZone;
+            state.allImagesFlat = flat;
+            return { byZone, flat };
+        }
+
+        function getRandomImageFromZone(zone) {
+            const list = state.imagesByZone[zone] || [];
+            if (list.length === 0) return null;
+            return pickRandom(list, 1)[0] || null;
+        }
+
+        function getRandomImagesFromZone(zone, count) {
+            const list = state.imagesByZone[zone] || [];
+            if (list.length === 0) return [];
+            return pickRandom(list, count);
+        }
+
+        function getRandomImageFromNonZ() {
+            const nonZ = CONFIG.nonZZones;
+            const pool = [];
+            for (const z of nonZ) {
+                const list = state.imagesByZone[z] || [];
+                pool.push(...list);
+            }
+            if (pool.length === 0) return null;
+            return pickRandom(pool, 1)[0] || null;
+        }
+
+        function getAllZonesWithImages() {
+            return CONFIG.zones.filter(z => (state.imagesByZone[z] || []).length > 0);
+        }
+
+        // ======================================================================
+        //  题目生成器
+        // ======================================================================
+        function generateQuestion() {
+            const zonesWithImages = getAllZonesWithImages();
+            if (zonesWithImages.length === 0) return null;
+
+            const types = [
+                'which_belong',
+                'which_not_belong',
+                'which_zone',
+                'which_not_unicode',
+                'which_unicode',
+            ];
+            const type = pickRandom(types, 1)[0];
+
+            const nonZZones = CONFIG.nonZZones.filter(z => (state.imagesByZone[z] || []).length > 0);
+            const zHasImages = (state.imagesByZone['Z'] || []).length > 0;
+
+            let question = null;
+
+            switch (type) {
+                case 'which_belong': {
+                    if (nonZZones.length === 0) return generateQuestion();
+                    const targetZone = pickRandom(nonZZones, 1)[0];
+                    const targetImg = getRandomImageFromZone(targetZone);
+                    if (!targetImg) return generateQuestion();
+                    const otherZones = CONFIG.zones.filter(z => z !== targetZone && (state.imagesByZone[z] || []).length >
+                    0);
+                    let distractors = [];
+                    for (const z of otherZones) {
+                        const imgs = getRandomImagesFromZone(z, 2);
+                        distractors.push(...imgs);
+                    }
+                    if (distractors.length < 3) {
+                        const allOthers = state.allImagesFlat.filter(f => f.zone !== targetZone);
+                        const extra = pickRandom(allOthers.map(f => f.url), 3 - distractors.length);
+                        distractors.push(...extra);
+                    }
+                    distractors = pickRandom(distractors, 3);
+                    const options = shuffleArray([targetImg, ...distractors]);
+                    const answerIndex = options.indexOf(targetImg);
+                    question = {
+                        type: 'which_belong',
+                        zone: targetZone,
+                        questionText: `以下哪个字属于 <span class="highlight">${getZoneLabel(targetZone)}</span>？`,
+                        images: options.map(url => ({ url, zone: state.allImagesFlat.find(f => f.url === url)?.zone ||
+                                'unknown' })),
+                        options: options,
+                        answer: answerIndex,
+                        singleImage: false,
+                    };
+                    break;
+                }
+                case 'which_not_belong': {
+                    if (nonZZones.length === 0) return generateQuestion();
+                    const targetZone = pickRandom(nonZZones, 1)[0];
+                    const targetImg = getRandomImageFromZone(targetZone);
+                    if (!targetImg) return generateQuestion();
+                    const otherZones = CONFIG.zones.filter(z => z !== targetZone && (state.imagesByZone[z] || []).length >
+                    0);
+                    let distractors = [];
+                    for (const z of otherZones) {
+                        const imgs = getRandomImagesFromZone(z, 2);
+                        distractors.push(...imgs);
+                    }
+                    if (distractors.length < 3) {
+                        const allOthers = state.allImagesFlat.filter(f => f.zone !== targetZone);
+                        const extra = pickRandom(allOthers.map(f => f.url), 3 - distractors.length);
+                        distractors.push(...extra);
+                    }
+                    distractors = pickRandom(distractors, 3);
+                    const correctImg = distractors[0];
+                    const options = shuffleArray([targetImg, ...distractors]);
+                    const answerIndex = options.indexOf(correctImg);
+                    question = {
+                        type: 'which_not_belong',
+                        zone: targetZone,
+                        questionText: `以下哪个字 <span class="highlight">不</span> 属于 ${getZoneLabel(targetZone)}？`,
+                        images: options.map(url => ({ url, zone: state.allImagesFlat.find(f => f.url === url)?.zone ||
+                                'unknown' })),
+                        options: options,
+                        answer: answerIndex,
+                        singleImage: false,
+                    };
+                    break;
+                }
+                case 'which_zone': {
+                    const nonZ = CONFIG.nonZZones.filter(z => (state.imagesByZone[z] || []).length > 0);
+                    if (nonZ.length === 0) return generateQuestion();
+                    const targetZone = pickRandom(nonZ, 1)[0];
+                    const img = getRandomImageFromZone(targetZone);
+                    if (!img) return generateQuestion();
+                    const allZones = CONFIG.zones.filter(z => z !== 'Z' && (state.imagesByZone[z] || []).length > 0);
+                    let zoneOptions = [targetZone];
+                    const others = allZones.filter(z => z !== targetZone);
+                    const extraZones = pickRandom(others, Math.min(3, others.length));
+                    zoneOptions.push(...extraZones);
+                    if (zoneOptions.length < 4) {
+                        const fallback = CONFIG.nonZZones.filter(z => !zoneOptions.includes(z));
+                        const more = pickRandom(fallback, 4 - zoneOptions.length);
+                        zoneOptions.push(...more);
+                    }
+                    zoneOptions = pickRandom(zoneOptions, 4);
+                    const answerIndex = zoneOptions.indexOf(targetZone);
+                    const shuffled = shuffleArray([...zoneOptions]);
+                    const answerIndexShuffled = shuffled.indexOf(targetZone);
+                    question = {
+                        type: 'which_zone',
+                        zone: targetZone,
+                        questionText: '这个字属于哪个扩展区？',
+                        singleImage: img,
+                        options: shuffled.map(z => getZoneLabel(z)),
+                        answer: answerIndexShuffled,
+                        singleImage: true,
+                        imageUrl: img,
+                    };
+                    break;
+                }
+                case 'which_not_unicode': {
+                    if (!zHasImages) return generateQuestion();
+                    const zImg = getRandomImageFromZone('Z');
+                    if (!zImg) return generateQuestion();
+                    const nonZ = CONFIG.nonZZones.filter(z => (state.imagesByZone[z] || []).length > 0);
+                    let nonZImgs = [];
+                    for (const z of nonZ) {
+                        const imgs = getRandomImagesFromZone(z, 2);
+                        nonZImgs.push(...imgs);
+                    }
+                    if (nonZImgs.length < 3) {
+                        const allNonZ = state.allImagesFlat.filter(f => f.zone !== 'Z');
+                        const extra = pickRandom(allNonZ.map(f => f.url), 3 - nonZImgs.length);
+                        nonZImgs.push(...extra);
+                    }
+                    nonZImgs = pickRandom(nonZImgs, 3);
+                    const options = shuffleArray([zImg, ...nonZImgs]);
+                    const answerIndex = options.indexOf(zImg);
+                    question = {
+                        type: 'which_not_unicode',
+                        questionText: '以下哪个字 <span class="highlight">不在</span> Unicode 中？',
+                        images: options.map(url => ({ url, zone: state.allImagesFlat.find(f => f.url === url)?.zone ||
+                                'unknown' })),
+                        options: options,
+                        answer: answerIndex,
+                        singleImage: false,
+                    };
+                    break;
+                }
+                case 'which_unicode': {
+                    const nonZ = CONFIG.nonZZones.filter(z => (state.imagesByZone[z] || []).length > 0);
+                    if (nonZ.length === 0 || !zHasImages) return generateQuestion();
+                    const nonZImg = getRandomImageFromNonZ();
+                    if (!nonZImg) return generateQuestion();
+                    const zImgs = getRandomImagesFromZone('Z', 3);
+                    if (zImgs.length < 3) return generateQuestion();
+                    const options = shuffleArray([nonZImg, ...zImgs]);
+                    const answerIndex = options.indexOf(nonZImg);
+                    question = {
+                        type: 'which_unicode',
+                        questionText: '以下哪个字 <span class="highlight">被</span> Unicode 编码？',
+                        images: options.map(url => ({ url, zone: state.allImagesFlat.find(f => f.url === url)?.zone ||
+                                'unknown' })),
+                        options: options,
+                        answer: answerIndex,
+                        singleImage: false,
+                    };
+                    break;
+                }
+                default:
+                    return null;
+            }
+            return question;
+        }
+
+        // ======================================================================
+        //  渲染题目
+        // ======================================================================
+        function renderQuestion(q) {
+            if (!q) {
+                dom.questionText.textContent = '⚠️ 题库加载失败，请刷新重试';
+                dom.optionsGrid.innerHTML = '';
+                dom.feedbackBox.classList.remove('show');
+                dom.nextBtn.disabled = true;
+                return;
+            }
+
+            state.currentQuestion = q;
+            dom.questionText.innerHTML = q.questionText;
+
+            if (q.singleImage && q.imageUrl) {
+                dom.questionImageContainer.style.display = 'flex';
+                dom.questionSingleImg.src = q.imageUrl;
+                dom.questionSingleImg.alt = '生僻字';
+            } else {
+                dom.questionImageContainer.style.display = 'none';
+            }
+
+            dom.optionsGrid.innerHTML = '';
+            const labels = ['A', 'B', 'C', 'D'];
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.dataset.index = idx;
+
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'opt-label';
+                labelSpan.textContent = labels[idx] || '?';
+                btn.appendChild(labelSpan);
+
+                if (q.singleImage) {
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'opt-text';
+                    textSpan.textContent = opt;
+                    btn.appendChild(textSpan);
+                } else {
+                    const img = document.createElement('img');
+                    img.className = 'opt-img';
+                    img.src = opt;
+                    img.alt = '字';
+                    img.loading = 'lazy';
+                    btn.appendChild(img);
+                    const info = state.allImagesFlat.find(f => f.url === opt);
+                    if (info) {
+                        const sub = document.createElement('span');
+                        sub.style.cssText =
+                            'font-size:10px;color:#6a7f9b;margin-left:auto;flex-shrink:0;background:#1a2230;padding:0 8px;border-radius:12px;';
+                        sub.textContent = info.zone === 'Z' ? '⛔' : info.zone;
+                        btn.appendChild(sub);
+                    }
+                }
+
+                btn.addEventListener('click', () => handleOptionClick(idx));
+                dom.optionsGrid.appendChild(btn);
+            });
+
+            dom.feedbackBox.classList.remove('show');
+            dom.feedbackBox.className = 'feedback-box';
+            dom.nextBtn.disabled = true;
+            dom.nextBtn.textContent = '下一题 →';
+            state.isAnswering = false;
+
+            document.querySelectorAll('.option-btn').forEach(b => b.disabled = false);
+        }
+
+        // ======================================================================
+        //  处理答题
+        // ======================================================================
+        function handleOptionClick(index) {
+            if (state.isAnswering || !state.currentQuestion) return;
+            state.isAnswering = true;
+
+            const q = state.currentQuestion;
+            const isCorrect = (index === q.answer);
+            const btns = document.querySelectorAll('.option-btn');
+
+            btns.forEach(b => b.disabled = true);
+
+            btns.forEach((btn, i) => {
+                if (i === q.answer) {
+                    btn.classList.add('correct');
+                }
+                if (i === index && !isCorrect) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            const fb = dom.feedbackBox;
+            fb.classList.add('show');
+            if (isCorrect) {
+                fb.className = 'feedback-box show correct';
+                fb.innerHTML = '✅ 回答正确！';
+                state.score += 1;
+                dom.scoreDisplay.textContent = state.score;
+                if (state.mode === 'challenge') {
+                    state.timer = 50;
+                    dom.timerDisplay.textContent = state.timer;
+                    dom.timerDisplay.className = 'timer-num safe';
+                }
+            } else {
+                fb.className = 'feedback-box show wrong';
+                const correctOpt = q.options[q.answer];
+                let correctDisplay = correctOpt;
+                if (!q.singleImage) {
+                    const info = state.allImagesFlat.find(f => f.url === correctOpt);
+                    correctDisplay = info ? `[${info.zone}] ${correctOpt}` : correctOpt;
+                }
+                fb.innerHTML = `❌ 回答错误。<div class="answer-reveal">正确答案：${correctDisplay}</div>`;
+                if (state.mode === 'challenge') {
+                    dom.nextBtn.textContent = '⏳ 5s 后退出…';
+                    dom.nextBtn.disabled = true;
+                    if (state.timerInterval) {
+                        clearInterval(state.timerInterval);
+                        state.timerInterval = null;
+                    }
+                    let countdown = 5;
+                    const exitTimer = setInterval(() => {
+                        countdown -= 1;
+                        dom.nextBtn.textContent = `⏳ ${countdown}s 后退出…`;
+                        if (countdown <= 0) {
+                            clearInterval(exitTimer);
+                            endGame();
+                        }
+                    }, 1000);
+                    state._exitTimer = exitTimer;
+                    return;
+                } else {
+                    dom.nextBtn.disabled = false;
+                    dom.nextBtn.textContent = '继续 →';
+                }
+            }
+
+            // 挑战模式答对时更新排行榜
+            if (state.mode === 'challenge' && isCorrect) {
+                updateLeaderboardWithScore(state.score);
+            }
+
+            if (state.mode === 'practice' || (state.mode === 'challenge' && isCorrect)) {
+                dom.nextBtn.disabled = false;
+                dom.nextBtn.textContent = '下一题 →';
+            }
+        }
+
+        // ======================================================================
+        //  游戏控制
+        // ======================================================================
+        function startGame() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+            if (state._exitTimer) {
+                clearInterval(state._exitTimer);
+                state._exitTimer = null;
+            }
+
+            state.score = 0;
+            state.isPlaying = true;
+            state.isAnswering = false;
+            state.timer = 50;
+            dom.scoreDisplay.textContent = '0';
+            dom.timerDisplay.textContent = '50';
+            dom.timerDisplay.className = 'timer-num safe';
+
+            dom.loadingPlaceholder.style.display = 'none';
+            dom.questionContent.style.display = 'block';
+
+            if (state.allImagesFlat.length === 0) {
+                loadImages().then(() => {
+                    showNextQuestion();
+                });
+            } else {
+                showNextQuestion();
+            }
+
+            if (state.mode === 'challenge') {
+                startTimer();
+            } else {
+                dom.timerDisplay.textContent = '∞';
+                dom.timerDisplay.className = 'timer-num safe';
+            }
+
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === state.mode);
+            });
+        }
+
+        function startTimer() {
+            if (state.timerInterval) clearInterval(state.timerInterval);
+            state.timer = 50;
+            dom.timerDisplay.textContent = '50';
+            dom.timerDisplay.className = 'timer-num safe';
+
+            state.timerInterval = setInterval(() => {
+                state.timer -= 1;
+                dom.timerDisplay.textContent = Math.max(0, state.timer);
+                if (state.timer <= 10) {
+                    dom.timerDisplay.className = 'timer-num';
+                }
+                if (state.timer <= 0) {
+                    clearInterval(state.timerInterval);
+                    state.timerInterval = null;
+                    if (!state.isAnswering && state.isPlaying) {
+                        const q = state.currentQuestion;
+                        if (q) {
+                            state.isAnswering = true;
+                            const btns = document.querySelectorAll('.option-btn');
+                            btns.forEach(b => b.disabled = true);
+                            btns.forEach((btn, i) => {
+                                if (i === q.answer) {
+                                    btn.classList.add('correct');
+                                }
+                            });
+                            const fb = dom.feedbackBox;
+                            fb.classList.add('show');
+                            fb.className = 'feedback-box show wrong';
+                            const correctOpt = q.options[q.answer];
+                            let correctDisplay = correctOpt;
+                            if (!q.singleImage) {
+                                const info = state.allImagesFlat.find(f => f.url === correctOpt);
+                                correctDisplay = info ? `[${info.zone}] ${correctOpt}` : correctOpt;
+                            }
+                            fb.innerHTML =
+                                `⏰ 时间到！<div class="answer-reveal">正确答案：${correctDisplay}</div>`;
+                            dom.nextBtn.textContent = '⏳ 5s 后退出…';
+                            dom.nextBtn.disabled = true;
+                            let countdown = 5;
+                            const exitTimer = setInterval(() => {
+                                countdown -= 1;
+                                dom.nextBtn.textContent = `⏳ ${countdown}s 后退出…`;
+                                if (countdown <= 0) {
+                                    clearInterval(exitTimer);
+                                    endGame();
+                                }
+                            }, 1000);
+                            state._exitTimer = exitTimer;
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        function showNextQuestion() {
+            if (!state.isPlaying) return;
+
+            if (state._exitTimer) {
+                clearInterval(state._exitTimer);
+                state._exitTimer = null;
+            }
+
+            const q = generateQuestion();
+            if (!q) {
+                dom.questionText.textContent = '⚠️ 题库不足，请添加更多生僻字图片！';
+                dom.optionsGrid.innerHTML = '';
+                dom.feedbackBox.classList.remove('show');
+                dom.nextBtn.disabled = true;
+                return;
+            }
+            renderQuestion(q);
+
+            if (state.mode === 'challenge') {
+                if (state.timerInterval) {
+                    clearInterval(state.timerInterval);
+                    state.timerInterval = null;
+                }
+                state.timer = 50;
+                dom.timerDisplay.textContent = '50';
+                dom.timerDisplay.className = 'timer-num safe';
+                startTimer();
+            }
+        }
+
+        function endGame() {
+            state.isPlaying = false;
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+            if (state._exitTimer) {
+                clearInterval(state._exitTimer);
+                state._exitTimer = null;
+            }
+
+            if (state.mode === 'challenge' && state.score > 0) {
+                updateLeaderboardWithScore(state.score);
+            }
+
+            dom.nextBtn.disabled = true;
+            dom.nextBtn.textContent = '已结束';
+
+            const fb = dom.feedbackBox;
+            fb.classList.add('show');
+            fb.className = 'feedback-box show';
+            fb.style.borderColor = '#f0c27f';
+            fb.style.color = '#f0c27f';
+            fb.style.background = 'rgba(240,194,127,0.08)';
+            fb.innerHTML = `
+            🎮 游戏结束！<br>
+            连续答对：<strong>${state.score}</strong> 题
+            ${state.mode === 'challenge' ? ' 🏆 已更新排行榜' : ''}
+            <div style="margin-top:8px;font-size:14px;color:#6a7f9b;">
+              点击「重新开始」再来一局
+            </div>
+          `;
+
+            dom.resetBtn.disabled = false;
+            refreshLeaderboard();
+        }
+
+        // ======================================================================
+        //  排行榜更新 (通过 Netlify Function)
+        // ======================================================================
+        async function updateLeaderboardWithScore(score) {
+            const ip = state.myIp;
+            if (!ip || ip === 'unknown') return;
+
+            try {
+                const res = await fetch(CONFIG.functionEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ip, score })
+                });
+                if (!res.ok) {
+                    console.warn('Function 返回错误，回退到本地');
+                    updateLocalScore(ip, score);
+                }
+                // 无论成功与否，都刷新排行榜
+            } catch (e) {
+                console.warn('请求 Function 失败，回退到本地', e);
+                updateLocalScore(ip, score);
+            }
+            await refreshLeaderboard();
+        }
+
+        // ======================================================================
+        //  排行榜读取 (优先 GitHub，失败则本地)
+        // ======================================================================
+        async function refreshLeaderboard() {
+            const ip = state.myIp;
+
+            // 尝试从 GitHub 读取
+            let text = await fetchRankFileContent();
+            let data = null;
+            if (text !== null) {
+                data = parseLeaderboard(text);
+            }
+
+            if (!data || data.length === 0) {
+                // 回退到本地
+                data = getLocalLeaderboard();
+            }
+
+            const sorted = data.slice().sort((a, b) => b.score - a.score);
+            state.leaderboard = sorted;
+
+            // 查找自己
+            let myRank = null;
+            let myBest = 0;
+            sorted.forEach((item, idx) => {
+                if (item.ip === ip) {
+                    myRank = idx + 1;
+                    myBest = item.score;
+                }
+            });
+
+            // 如果没找到，检查本地是否有更高
+            if (!myRank) {
+                const localList = getLocalLeaderboard();
+                const localMe = localList.find(item => item.ip === ip);
+                if (localMe) {
+                    myBest = localMe.score;
+                    const allSorted = [...sorted, ...localList.filter(item => item.ip !== ip)]
+                        .sort((a, b) => b.score - a.score);
+                    const idx = allSorted.findIndex(item => item.ip === ip);
+                    if (idx >= 0 && idx < 100) myRank = idx + 1;
+                }
+            }
+
+            state.myBestScore = myBest;
+            state.myRank = myRank;
+
+            if (myRank !== null && myRank <= 100) {
+                dom.myRank.innerHTML = `我的排名: <strong>#${myRank}</strong> · 最佳 <strong>${myBest}</strong> 题`;
+            } else if (myBest > 0) {
+                dom.myRank.innerHTML = `我的最佳: <strong>${myBest}</strong> 题 (前100名之外)`;
+            } else {
+                dom.myRank.innerHTML = `我的最佳: <strong>—</strong>`;
+            }
+
+            renderLeaderboard(sorted, ip);
+        }
+
+        function renderLeaderboard(list, myIp) {
+            const ul = dom.leaderboardList;
+            ul.innerHTML = '';
+
+            if (!list || list.length === 0) {
+                ul.innerHTML = '<li class="empty-msg">暂无记录，快来挑战吧！</li>';
+                return;
+            }
+
+            const top100 = list.slice(0, 100);
+            top100.forEach((item, idx) => {
+                const li = document.createElement('li');
+                const rank = document.createElement('span');
+                rank.className = 'rank';
+                if (idx === 0) rank.classList.add('top1');
+                else if (idx === 1) rank.classList.add('top2');
+                else if (idx === 2) rank.classList.add('top3');
+                rank.textContent = `#${idx + 1}`;
+                li.appendChild(rank);
+
+                const ipSpan = document.createElement('span');
+                ipSpan.className = 'ip-addr';
+                const displayIp = item.ip.length > 12 ? item.ip.slice(0, 8) + '…' + item.ip.slice(-4) : item.ip;
+                ipSpan.textContent = displayIp;
+                li.appendChild(ipSpan);
+
+                const scoreSpan = document.createElement('span');
+                scoreSpan.className = 'score';
+                scoreSpan.textContent = item.score;
+                li.appendChild(scoreSpan);
+
+                if (item.ip === myIp) {
+                    const tag = document.createElement('span');
+                    tag.className = 'me-tag';
+                    tag.textContent = '我';
+                    li.appendChild(tag);
+                }
+
+                ul.appendChild(li);
+            });
+        }
+
+        // ======================================================================
+        //  加载图片
+        // ======================================================================
+        async function loadImages() {
+            dom.loadingPlaceholder.style.display = 'flex';
+            dom.questionContent.style.display = 'none';
+
+            try {
+                const raw = await fetchGitHubImageList();
+                buildImageIndex(raw);
+                const total = state.allImagesFlat.length;
+                if (total === 0) {
+                    dom.loadingPlaceholder.innerHTML = `
+                <div style="color:#fc5c7d;font-size:40px;">⚠️</div>
+                <span>未找到任何图片，请确保 /characters/ 目录下包含图片文件。</span>
+                <span style="font-size:13px;color:#4a5a6a;">支持 B,C,D,E,F,G,H,I,J,Z 等子目录</span>
+              `;
+                    return false;
+                }
+                dom.loadingPlaceholder.style.display = 'none';
+                dom.questionContent.style.display = 'block';
+                return true;
+            } catch (e) {
+                console.error('加载图片失败:', e);
+                dom.loadingPlaceholder.innerHTML = `
+              <div style="color:#fc5c7d;font-size:40px;">💥</div>
+              <span>加载失败: ${e.message || '网络错误'}</span>
+              <span style="font-size:13px;color:#4a5a6a;">请检查 GitHub 仓库配置是否正确</span>
+            `;
+                return false;
+            }
+        }
+
+        // ======================================================================
+        //  初始化
+        // ======================================================================
+        async function initApp() {
+            // 获取 IP
+            state.myIp = await fetchMyIP();
+            dom.ipDisplay.textContent = state.myIp;
+
+            // 加载图片
+            const ok = await loadImages();
+            if (ok) {
+                startGame();
+            }
+
+            // 加载排行榜
+            await refreshLeaderboard();
+
+            // ---- 事件绑定 ----
+            dom.modeBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const mode = btn.dataset.mode;
+                    if (mode === state.mode) return;
+                    state.mode = mode;
+                    if (state.timerInterval) {
+                        clearInterval(state.timerInterval);
+                        state.timerInterval = null;
+                    }
+                    if (state._exitTimer) {
+                        clearInterval(state._exitTimer);
+                        state._exitTimer = null;
+                    }
+                    startGame();
+                });
+            });
+
+            dom.nextBtn.addEventListener('click', () => {
+                if (dom.nextBtn.disabled) return;
+                if (state.isPlaying) {
+                    showNextQuestion();
+                }
+            });
+
+            dom.resetBtn.addEventListener('click', () => {
+                if (state.timerInterval) {
+                    clearInterval(state.timerInterval);
+                    state.timerInterval = null;
+                }
+                if (state._exitTimer) {
+                    clearInterval(state._exitTimer);
+                    state._exitTimer = null;
+                }
+                startGame();
+                refreshLeaderboard();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !dom.nextBtn.disabled) {
+                    dom.nextBtn.click();
+                }
+                if (['1', '2', '3', '4'].includes(e.key)) {
+                    const idx = parseInt(e.key) - 1;
+                    const btns = document.querySelectorAll('.option-btn:not(:disabled)');
+                    if (btns[idx]) btns[idx].click();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
