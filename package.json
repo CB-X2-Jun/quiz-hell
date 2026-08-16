@@ -1,0 +1,9 @@
+{
+  "name": "rare-char-quiz",
+  "version": "1.0.3",
+  "description": "生僻字挑战后端函数",
+  "main": "netlify/functions/update-score.js",
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
