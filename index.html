@@ -738,7 +738,7 @@
         // ======================================================================
         async function fetchGitHubImageList() {
             const { repoOwner, repoName, repoBranch, zones } = CONFIG;
-            const base = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/characters`;
+            const base = `https://gh-proxy.com/https://api.github.com/repos/${repoOwner}/${repoName}/contents/characters`;
             const results = {};
 
             for (const zone of zones) {
@@ -783,7 +783,7 @@
         async function fetchRankFileContent() {
             const { repoOwner, repoName, repoBranch } = CONFIG;
             const url =
-                `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${repoBranch}/rank.txt`;
+                `https://gh-proxy.com/https://raw.githubusercontent.com/${repoOwner}/${repoName}/${repoBranch}/rank.txt`;
             try {
                 const res = await fetch(url);
                 if (res.status === 404) {
