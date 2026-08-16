@@ -1,5 +1,5 @@
 // netlify/functions/update-score.js
-const fetch = require('node-fetch'); // Netlify 环境自带，无需安装
+const fetch = require('node-fetch');
 
 exports.handler = async (event) => {
   // 只允许 POST 请求
@@ -20,8 +20,8 @@ exports.handler = async (event) => {
     }
 
     // 您的仓库信息
-    const owner = 'YOUR_USERNAME';
-    const repo = 'YOUR_REPO';
+    const owner = 'CB-X2-Jun';
+    const repo = 'quiz-hell';
     const branch = 'main';
     const filePath = 'rank.txt';
 
