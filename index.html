@@ -202,7 +202,7 @@
             max-width: 140px;
             max-height: 140px;
             border-radius: 16px;
-            background: #0b0e17;
+            background: #f5f5f5;   /* 浅色背景，让 SVG 可见 */
             border: 2px solid #2a3344;
             padding: 8px;
             object-fit: contain;
@@ -258,10 +258,11 @@
             width: 44px;
             height: 44px;
             border-radius: 8px;
-            background: #0b0e17;
+            background: #f5f5f5;   /* 浅色背景 */
             border: 1px solid #2a3344;
             object-fit: contain;
             flex-shrink: 0;
+            padding: 4px;
         }
         .option-btn .opt-text {
             flex: 1;
@@ -632,8 +633,8 @@
         // ======================================================================
         const CONFIG = {
             // GitHub 仓库信息 (用于读取图片和 rank.txt)
-            repoOwner: 'CB-X2-Jun', // 你的 GitHub 用户名
-            repoName: 'quiz-hell', // 仓库名
+            repoOwner: 'YOUR_USERNAME', // 你的 GitHub 用户名
+            repoName: 'YOUR_REPO', // 仓库名
             repoBranch: 'main', // 分支名
 
             // 扩展区列表 (按字母顺序，Z 为特殊区)
@@ -660,8 +661,6 @@
             const shuffled = shuffleArray([...arr]);
             return shuffled.slice(0, Math.min(n, shuffled.length));
         }
-
-        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
         function getZoneLabel(zone) {
             if (zone === 'Z') return '不在Unicode';
@@ -889,7 +888,7 @@
         }
 
         // ======================================================================
-        //  题目生成器
+        //  题目生成器 (修正 “不属于” 题型)
         // ======================================================================
         function generateQuestion() {
             const zonesWithImages = getAllZonesWithImages();
@@ -915,8 +914,8 @@
                     const targetZone = pickRandom(nonZZones, 1)[0];
                     const targetImg = getRandomImageFromZone(targetZone);
                     if (!targetImg) return generateQuestion();
-                    const otherZones = CONFIG.zones.filter(z => z !== targetZone && (state.imagesByZone[z] || []).length >
-                    0);
+                    // 干扰项：从其他区取3个
+                    const otherZones = CONFIG.zones.filter(z => z !== targetZone && (state.imagesByZone[z] || []).length > 0);
                     let distractors = [];
                     for (const z of otherZones) {
                         const imgs = getRandomImagesFromZone(z, 2);
@@ -934,8 +933,6 @@
                         type: 'which_belong',
                         zone: targetZone,
                         questionText: `以下哪个字属于 <span class="highlight">${getZoneLabel(targetZone)}</span>？`,
-                        images: options.map(url => ({ url, zone: state.allImagesFlat.find(f => f.url === url)?.zone ||
-                                'unknown' })),
                         options: options,
                         answer: answerIndex,
                         singleImage: false,
@@ -943,32 +940,26 @@
                     break;
                 }
                 case 'which_not_belong': {
+                    // 需要 3 个属于目标区的字，1 个不属于目标区的字
                     if (nonZZones.length === 0) return generateQuestion();
                     const targetZone = pickRandom(nonZZones, 1)[0];
-                    const targetImg = getRandomImageFromZone(targetZone);
-                    if (!targetImg) return generateQuestion();
-                    const otherZones = CONFIG.zones.filter(z => z !== targetZone && (state.imagesByZone[z] || []).length >
-                    0);
-                    let distractors = [];
-                    for (const z of otherZones) {
-                        const imgs = getRandomImagesFromZone(z, 2);
-                        distractors.push(...imgs);
+                    // 从目标区取3个不同的图片
+                    let targetImgs = getRandomImagesFromZone(targetZone, 3);
+                    if (targetImgs.length < 3) {
+                        // 如果目标区图片不足3个，则换一个目标区或重新生成
+                        return generateQuestion();
                     }
-                    if (distractors.length < 3) {
-                        const allOthers = state.allImagesFlat.filter(f => f.zone !== targetZone);
-                        const extra = pickRandom(allOthers.map(f => f.url), 3 - distractors.length);
-                        distractors.push(...extra);
-                    }
-                    distractors = pickRandom(distractors, 3);
-                    const correctImg = distractors[0];
-                    const options = shuffleArray([targetImg, ...distractors]);
+                    // 从其他区取1个作为正确答案（不属于目标区）
+                    const otherZones = CONFIG.zones.filter(z => z !== targetZone && (state.imagesByZone[z] || []).length > 0);
+                    if (otherZones.length === 0) return generateQuestion();
+                    const correctImg = getRandomImageFromZone(pickRandom(otherZones, 1)[0]);
+                    if (!correctImg) return generateQuestion();
+                    const options = shuffleArray([...targetImgs, correctImg]);
                     const answerIndex = options.indexOf(correctImg);
                     question = {
                         type: 'which_not_belong',
                         zone: targetZone,
                         questionText: `以下哪个字 <span class="highlight">不</span> 属于 ${getZoneLabel(targetZone)}？`,
-                        images: options.map(url => ({ url, zone: state.allImagesFlat.find(f => f.url === url)?.zone ||
-                                'unknown' })),
                         options: options,
                         answer: answerIndex,
                         singleImage: false,
@@ -1028,8 +1019,6 @@
                     question = {
                         type: 'which_not_unicode',
                         questionText: '以下哪个字 <span class="highlight">不在</span> Unicode 中？',
-                        images: options.map(url => ({ url, zone: state.allImagesFlat.find(f => f.url === url)?.zone ||
-                                'unknown' })),
                         options: options,
                         answer: answerIndex,
                         singleImage: false,
@@ -1048,8 +1037,6 @@
                     question = {
                         type: 'which_unicode',
                         questionText: '以下哪个字 <span class="highlight">被</span> Unicode 编码？',
-                        images: options.map(url => ({ url, zone: state.allImagesFlat.find(f => f.url === url)?.zone ||
-                                'unknown' })),
                         options: options,
                         answer: answerIndex,
                         singleImage: false,
@@ -1109,14 +1096,7 @@
                     img.alt = '字';
                     img.loading = 'lazy';
                     btn.appendChild(img);
-                    const info = state.allImagesFlat.find(f => f.url === opt);
-                    if (info) {
-                        const sub = document.createElement('span');
-                        sub.style.cssText =
-                            'font-size:10px;color:#6a7f9b;margin-left:auto;flex-shrink:0;background:#1a2230;padding:0 8px;border-radius:12px;';
-                        sub.textContent = info.zone === 'Z' ? '⛔' : info.zone;
-                        btn.appendChild(sub);
-                    }
+                    // 移除显示区的标签（不再暴露区信息）
                 }
 
                 btn.addEventListener('click', () => handleOptionClick(idx));
@@ -1142,6 +1122,7 @@
             const q = state.currentQuestion;
             const isCorrect = (index === q.answer);
             const btns = document.querySelectorAll('.option-btn');
+            const labels = ['A', 'B', 'C', 'D'];
 
             btns.forEach(b => b.disabled = true);
 
@@ -1168,13 +1149,8 @@
                 }
             } else {
                 fb.className = 'feedback-box show wrong';
-                const correctOpt = q.options[q.answer];
-                let correctDisplay = correctOpt;
-                if (!q.singleImage) {
-                    const info = state.allImagesFlat.find(f => f.url === correctOpt);
-                    correctDisplay = info ? `[${info.zone}] ${correctOpt}` : correctOpt;
-                }
-                fb.innerHTML = `❌ 回答错误。<div class="answer-reveal">正确答案：${correctDisplay}</div>`;
+                // 只显示正确答案的选项字母
+                fb.innerHTML = `❌ 回答错误。<div class="answer-reveal">正确答案是：选项 ${labels[q.answer]}</div>`;
                 if (state.mode === 'challenge') {
                     dom.nextBtn.textContent = '⏳ 5s 后退出…';
                     dom.nextBtn.disabled = true;
@@ -1199,7 +1175,6 @@
                 }
             }
 
-            // 挑战模式答对时更新排行榜
             if (state.mode === 'challenge' && isCorrect) {
                 updateLeaderboardWithScore(state.score);
             }
@@ -1283,14 +1258,9 @@
                             const fb = dom.feedbackBox;
                             fb.classList.add('show');
                             fb.className = 'feedback-box show wrong';
-                            const correctOpt = q.options[q.answer];
-                            let correctDisplay = correctOpt;
-                            if (!q.singleImage) {
-                                const info = state.allImagesFlat.find(f => f.url === correctOpt);
-                                correctDisplay = info ? `[${info.zone}] ${correctOpt}` : correctOpt;
-                            }
+                            const labels = ['A', 'B', 'C', 'D'];
                             fb.innerHTML =
-                                `⏰ 时间到！<div class="answer-reveal">正确答案：${correctDisplay}</div>`;
+                                `⏰ 时间到！<div class="answer-reveal">正确答案是：选项 ${labels[q.answer]}</div>`;
                             dom.nextBtn.textContent = '⏳ 5s 后退出…';
                             dom.nextBtn.disabled = true;
                             let countdown = 5;
@@ -1377,7 +1347,7 @@
         }
 
         // ======================================================================
-        //  排行榜更新 (通过 Netlify Function)
+        //  排行榜更新 (通过 Netlify Function，增加调试日志)
         // ======================================================================
         async function updateLeaderboardWithScore(score) {
             const ip = state.myIp;
@@ -1389,11 +1359,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ip, score })
                 });
+                const data = await res.json();
+                console.log('Function 响应:', data);
                 if (!res.ok) {
                     console.warn('Function 返回错误，回退到本地');
                     updateLocalScore(ip, score);
                 }
-                // 无论成功与否，都刷新排行榜
             } catch (e) {
                 console.warn('请求 Function 失败，回退到本地', e);
                 updateLocalScore(ip, score);
@@ -1407,7 +1378,6 @@
         async function refreshLeaderboard() {
             const ip = state.myIp;
 
-            // 尝试从 GitHub 读取
             let text = await fetchRankFileContent();
             let data = null;
             if (text !== null) {
@@ -1415,14 +1385,12 @@
             }
 
             if (!data || data.length === 0) {
-                // 回退到本地
                 data = getLocalLeaderboard();
             }
 
             const sorted = data.slice().sort((a, b) => b.score - a.score);
             state.leaderboard = sorted;
 
-            // 查找自己
             let myRank = null;
             let myBest = 0;
             sorted.forEach((item, idx) => {
@@ -1432,7 +1400,6 @@
                 }
             });
 
-            // 如果没找到，检查本地是否有更高
             if (!myRank) {
                 const localList = getLocalLeaderboard();
                 const localMe = localList.find(item => item.ip === ip);
@@ -1538,20 +1505,16 @@
         //  初始化
         // ======================================================================
         async function initApp() {
-            // 获取 IP
             state.myIp = await fetchMyIP();
             dom.ipDisplay.textContent = state.myIp;
 
-            // 加载图片
             const ok = await loadImages();
             if (ok) {
                 startGame();
             }
 
-            // 加载排行榜
             await refreshLeaderboard();
 
-            // ---- 事件绑定 ----
             dom.modeBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const mode = btn.dataset.mode;
