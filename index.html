@@ -737,44 +737,15 @@
         //  GitHub API — 图片列表
         // ======================================================================
         async function fetchGitHubImageList() {
-            const { repoOwner, repoName, repoBranch, zones } = CONFIG;
-            const base = `https://gh-proxy.com/https://api.github.com/repos/${repoOwner}/${repoName}/contents/characters`;
-            const results = {};
-
-            for (const zone of zones) {
-                try {
-                    const url = `${base}/${zone}?ref=${repoBranch}`;
-                    const res = await fetch(url);
-                    if (!res.ok) {
-                        console.warn(`Zone ${zone} 不存在或无法访问 (${res.status})`);
-                        results[zone] = [];
-                        continue;
-                    }
-                    const data = await res.json();
-                    if (!Array.isArray(data)) {
-                        results[zone] = [];
-                        continue;
-                    }
-                    const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp'];
-                    const files = data
-                        .filter(item => item.type === 'file')
-                        .filter(item => {
-                            const ext = item.name.toLowerCase();
-                            return imageExts.some(e => ext.endsWith(e));
-                        })
-                        .map(item => ({
-                            path: item.path,
-                            url: 'https://gh-proxy.com/' + item.download_url,
-                            zone: zone,
-                            name: item.name,
-                        }));
-                    results[zone] = files;
-                } catch (e) {
-                    console.warn(`获取 Zone ${zone} 失败:`, e);
-                    results[zone] = [];
-                }
-            }
-            return results;
+          try {
+            const res = await fetch('/.netlify/functions/get-images');
+            if (!res.ok) throw new Error('Function 返回错误');
+            const data = await res.json();
+            return data; // 直接返回按 zone 分组的对象
+          } catch (e) {
+            console.error('获取图片列表失败:', e);
+            return {};
+          }
         }
 
         // ======================================================================
@@ -848,16 +819,16 @@
         //  图片数据管理
         // ======================================================================
         function buildImageIndex(raw) {
-            const byZone = {};
-            const flat = [];
-            for (const [zone, files] of Object.entries(raw)) {
-                byZone[zone] = files.map(f => f.url);
-                flat.push(...files.map(f => ({ ...f, zone })));
-            }
-            state.allImages = raw;
-            state.imagesByZone = byZone;
-            state.allImagesFlat = flat;
-            return { byZone, flat };
+          const byZone = {};
+          const flat = [];
+          for (const [zone, files] of Object.entries(raw)) {
+            byZone[zone] = files.map(f => 'https://gh-proxy.com/' + f.url); // 添加代理
+            flat.push(...files.map(f => ({ ...f, url: 'https://gh-proxy.com/' + f.url, zone })));
+          }
+          state.allImages = raw; // 保存原始结构（可选）
+          state.imagesByZone = byZone;
+          state.allImagesFlat = flat;
+          return { byZone, flat };
         }
 
         function getRandomImageFromZone(zone) {
