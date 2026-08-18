@@ -26,7 +26,7 @@ exports.handler = async (event) => {
     const filePath = 'rank.txt';
 
     // 1. 获取当前 rank.txt 的内容和 SHA
-    const getUrl = `https://gh-proxy.com/https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
+    const getUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
     const getRes = await fetch(getUrl, {
       headers: {
         Authorization: `token ${token}`,
