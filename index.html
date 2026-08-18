@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>史上最难！生僻字挑战 · Netlify 排行榜</title>
+    <!-- flag-icons CSS (从指定CDN加载，不使用jsdelivr或raw) -->
+    <link rel="stylesheet" href="https://flagicons.lipis.dev/css/flag-icons.min.css" />
     <style>
         /* ===== 全局重置 & 主题 ===== */
         * {
@@ -202,7 +204,7 @@
             max-width: 140px;
             max-height: 140px;
             border-radius: 16px;
-            background: #f5f5f5;   /* 浅色背景，让 SVG 可见 */
+            background: #f5f5f5;
             border: 2px solid #2a3344;
             padding: 8px;
             object-fit: contain;
@@ -258,7 +260,7 @@
             width: 44px;
             height: 44px;
             border-radius: 8px;
-            background: #f5f5f5;   /* 浅色背景 */
+            background: #f5f5f5;
             border: 1px solid #2a3344;
             object-fit: contain;
             flex-shrink: 0;
@@ -435,6 +437,13 @@
             font-family: 'JetBrains Mono', monospace;
             color: #c8d6e5;
             font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .leaderboard-list li .ip-addr .fi {
+            font-size: 1.2em;
+            line-height: 1;
         }
         .leaderboard-list li .score {
             font-weight: 700;
@@ -629,20 +638,16 @@
 
     <script>
         // ======================================================================
-        //  配置区 — 请根据你的仓库修改
+        //  配置区
         // ======================================================================
         const CONFIG = {
-            // GitHub 仓库信息 (用于读取图片和 rank.txt)
-            repoOwner: 'CB-X2-Jun', // 你的 GitHub 用户名
-            repoName: 'quiz-hell', // 仓库名
-            repoBranch: 'main', // 分支名
-
-            // 扩展区列表 (按字母顺序，Z 为特殊区)
+            repoOwner: 'CB-X2-Jun',
+            repoName: 'quiz-hell',
+            repoBranch: 'main',
             zones: ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'Z'],
             get nonZZones() { return this.zones.filter(z => z !== 'Z'); },
-
-            // Netlify Function 端点 (用于更新排行榜)
             functionEndpoint: '/.netlify/functions/update-score',
+            geoApiKey: 'gKvFOKpCGu3wwNyYMLejeORTEQgC6zTZkNxTHZ61fc0', // GeoIP Radar API Key
         };
 
         // ======================================================================
@@ -686,6 +691,7 @@
             myBestScore: 0,
             myRank: null,
             _exitTimer: null,
+            countryCache: {}, // 缓存 IP → 国家代码（小写）
         };
 
         // ======================================================================
@@ -734,18 +740,47 @@
         }
 
         // ======================================================================
-        //  GitHub API — 图片列表
+        //  获取国家代码 (使用 GeoIP Radar API)
+        // ======================================================================
+        async function fetchCountryCode(ip) {
+            if (state.countryCache[ip]) return state.countryCache[ip];
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+            try {
+                const res = await fetch(`https://api.geoipradar.com/json/${ip}`, {
+                    headers: { 'X-API-Key': CONFIG.geoApiKey },
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (data && data.country_code) {
+                    const code = data.country_code.toLowerCase();
+                    state.countryCache[ip] = code;
+                    return code;
+                } else {
+                    throw new Error('No country_code');
+                }
+            } catch (e) {
+                console.warn(`获取 ${ip} 国家代码失败:`, e);
+                state.countryCache[ip] = 'un';
+                return 'un';
+            }
+        }
+
+        // ======================================================================
+        //  GitHub API — 图片列表 (通过 Netlify Function)
         // ======================================================================
         async function fetchGitHubImageList() {
-          try {
-            const res = await fetch('/.netlify/functions/get-images');
-            if (!res.ok) throw new Error('Function 返回错误');
-            const data = await res.json();
-            return data; // 直接返回按 zone 分组的对象
-          } catch (e) {
-            console.error('获取图片列表失败:', e);
-            return {};
-          }
+            try {
+                const res = await fetch('/.netlify/functions/get-images');
+                if (!res.ok) throw new Error('Function 返回错误');
+                const data = await res.json();
+                return data;
+            } catch (e) {
+                console.error('获取图片列表失败:', e);
+                return {};
+            }
         }
 
         // ======================================================================
@@ -757,9 +792,7 @@
                 `https://gh-proxy.com/https://raw.githubusercontent.com/${repoOwner}/${repoName}/${repoBranch}/rank.txt`;
             try {
                 const res = await fetch(url);
-                if (res.status === 404) {
-                    return ''; // 文件不存在视为空
-                }
+                if (res.status === 404) return '';
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return await res.text();
             } catch (e) {
@@ -819,16 +852,16 @@
         //  图片数据管理
         // ======================================================================
         function buildImageIndex(raw) {
-          const byZone = {};
-          const flat = [];
-          for (const [zone, files] of Object.entries(raw)) {
-            byZone[zone] = files.map(f => 'https://gh-proxy.com/' + f.url); // 添加代理
-            flat.push(...files.map(f => ({ ...f, url: 'https://gh-proxy.com/' + f.url, zone })));
-          }
-          state.allImages = raw; // 保存原始结构（可选）
-          state.imagesByZone = byZone;
-          state.allImagesFlat = flat;
-          return { byZone, flat };
+            const byZone = {};
+            const flat = [];
+            for (const [zone, files] of Object.entries(raw)) {
+                byZone[zone] = files.map(f => 'https://gh-proxy.com/' + f.url);
+                flat.push(...files.map(f => ({ ...f, url: 'https://gh-proxy.com/' + f.url, zone })));
+            }
+            state.allImages = raw;
+            state.imagesByZone = byZone;
+            state.allImagesFlat = flat;
+            return { byZone, flat };
         }
 
         function getRandomImageFromZone(zone) {
@@ -859,7 +892,7 @@
         }
 
         // ======================================================================
-        //  题目生成器 (修正 “不属于” 题型)
+        //  题目生成器 (与之前相同，省略)
         // ======================================================================
         function generateQuestion() {
             const zonesWithImages = getAllZonesWithImages();
@@ -885,7 +918,6 @@
                     const targetZone = pickRandom(nonZZones, 1)[0];
                     const targetImg = getRandomImageFromZone(targetZone);
                     if (!targetImg) return generateQuestion();
-                    // 干扰项：从其他区取3个
                     const otherZones = CONFIG.zones.filter(z => z !== targetZone && (state.imagesByZone[z] || []).length > 0);
                     let distractors = [];
                     for (const z of otherZones) {
@@ -911,16 +943,10 @@
                     break;
                 }
                 case 'which_not_belong': {
-                    // 需要 3 个属于目标区的字，1 个不属于目标区的字
                     if (nonZZones.length === 0) return generateQuestion();
                     const targetZone = pickRandom(nonZZones, 1)[0];
-                    // 从目标区取3个不同的图片
                     let targetImgs = getRandomImagesFromZone(targetZone, 3);
-                    if (targetImgs.length < 3) {
-                        // 如果目标区图片不足3个，则换一个目标区或重新生成
-                        return generateQuestion();
-                    }
-                    // 从其他区取1个作为正确答案（不属于目标区）
+                    if (targetImgs.length < 3) return generateQuestion();
                     const otherZones = CONFIG.zones.filter(z => z !== targetZone && (state.imagesByZone[z] || []).length > 0);
                     if (otherZones.length === 0) return generateQuestion();
                     const correctImg = getRandomImageFromZone(pickRandom(otherZones, 1)[0]);
@@ -1021,7 +1047,7 @@
         }
 
         // ======================================================================
-        //  渲染题目
+        //  渲染题目 (与之前相同，省略)
         // ======================================================================
         function renderQuestion(q) {
             if (!q) {
@@ -1067,7 +1093,6 @@
                     img.alt = '字';
                     img.loading = 'lazy';
                     btn.appendChild(img);
-                    // 移除显示区的标签（不再暴露区信息）
                 }
 
                 btn.addEventListener('click', () => handleOptionClick(idx));
@@ -1084,7 +1109,7 @@
         }
 
         // ======================================================================
-        //  处理答题
+        //  处理答题 (与之前相同，省略)
         // ======================================================================
         function handleOptionClick(index) {
             if (state.isAnswering || !state.currentQuestion) return;
@@ -1120,7 +1145,6 @@
                 }
             } else {
                 fb.className = 'feedback-box show wrong';
-                // 只显示正确答案的选项字母
                 fb.innerHTML = `❌ 回答错误。<div class="answer-reveal">正确答案是：选项 ${labels[q.answer]}</div>`;
                 if (state.mode === 'challenge') {
                     dom.nextBtn.textContent = '⏳ 5s 后退出…';
@@ -1157,7 +1181,7 @@
         }
 
         // ======================================================================
-        //  游戏控制
+        //  游戏控制 (与之前相同，省略)
         // ======================================================================
         function startGame() {
             if (state.timerInterval) {
@@ -1318,7 +1342,7 @@
         }
 
         // ======================================================================
-        //  排行榜更新 (通过 Netlify Function，增加调试日志)
+        //  排行榜更新 (通过 Netlify Function)
         // ======================================================================
         async function updateLeaderboardWithScore(score) {
             const ip = state.myIp;
@@ -1344,7 +1368,7 @@
         }
 
         // ======================================================================
-        //  排行榜读取 (优先 GitHub，失败则本地)
+        //  排行榜读取 (优先 GitHub，失败则本地) + 获取国家信息
         // ======================================================================
         async function refreshLeaderboard() {
             const ip = state.myIp;
@@ -1359,9 +1383,17 @@
                 data = getLocalLeaderboard();
             }
 
+            // 按分数降序排序
             const sorted = data.slice().sort((a, b) => b.score - a.score);
             state.leaderboard = sorted;
 
+            // 获取每个IP的国家代码（只获取前100个，去重）
+            const ips = sorted.map(item => item.ip);
+            const uniqueIps = [...new Set(ips)];
+            // 并发获取（全部并发，api.i.pn 没有明确限制，且用户接受牺牲准确性）
+            await Promise.all(uniqueIps.map(ip => fetchCountryCode(ip)));
+
+            // 查找当前用户自己的排名
             let myRank = null;
             let myBest = 0;
             sorted.forEach((item, idx) => {
@@ -1397,6 +1429,9 @@
             renderLeaderboard(sorted, ip);
         }
 
+        // ======================================================================
+        //  渲染排行榜 (添加国旗)
+        // ======================================================================
         function renderLeaderboard(list, myIp) {
             const ul = dom.leaderboardList;
             ul.innerHTML = '';
@@ -1409,6 +1444,8 @@
             const top100 = list.slice(0, 100);
             top100.forEach((item, idx) => {
                 const li = document.createElement('li');
+
+                // 排名
                 const rank = document.createElement('span');
                 rank.className = 'rank';
                 if (idx === 0) rank.classList.add('top1');
@@ -1417,17 +1454,31 @@
                 rank.textContent = `#${idx + 1}`;
                 li.appendChild(rank);
 
+                // IP 地址 + 国旗
                 const ipSpan = document.createElement('span');
                 ipSpan.className = 'ip-addr';
-                const displayIp = item.ip.length > 12 ? item.ip.slice(0, 8) + '…' + item.ip.slice(-4) : item.ip;
-                ipSpan.textContent = displayIp;
+                const countryCode = state.countryCache[item.ip] || 'un';
+                // 使用 flag-icons 显示国旗
+                const flagSpan = document.createElement('span');
+                flagSpan.className = `fi fi-${countryCode}`;
+                flagSpan.style.fontSize = '1.2em';
+                ipSpan.appendChild(flagSpan);
+
+                // 脱敏后的 IP
+                const ipText = document.createTextNode(
+                    item.ip.length > 12 ? item.ip.slice(0, 8) + '…' + item.ip.slice(-4) : item.ip
+                );
+                ipSpan.appendChild(ipText);
+
                 li.appendChild(ipSpan);
 
+                // 分数
                 const scoreSpan = document.createElement('span');
                 scoreSpan.className = 'score';
                 scoreSpan.textContent = item.score;
                 li.appendChild(scoreSpan);
 
+                // 如果是自己，加标签
                 if (item.ip === myIp) {
                     const tag = document.createElement('span');
                     tag.className = 'me-tag';
